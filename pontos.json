@@ -1,0 +1,16 @@
+[
+    {
+        "nome": "Av artur ramos 107",
+        "regiao": "Sul",
+        "coordenadas": "2050 -105",
+        "leituras": [
+            {
+                "temperatura": 27.0,
+                "umidade": 10.0,
+                "cobertura": true
+            }
+        ],
+        "relatos": [],
+        "cobertura": "S"
+    }
+]

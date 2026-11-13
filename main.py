@@ -112,6 +112,14 @@ def tem_dado_pessoal(texto):
             digitos += 1
     return digitos >= 8
 
+def mensagem_temperatura(temp):
+    """devolve a mensagem de conforto térmico de acordo com a temperatura em °C"""
+    if 17 <= temp <= 25:
+        return "Nenhum alerta, temperatura está boa"
+    elif 8 <= temp < 17 or 25 < temp <= 36:
+        return f"alerta, temperatura em níveis desconfortáveis: {temp}°C"
+    else:
+        return f"alerta extremo! Temperatura preocupante: {temp}°C"
 
 # ==== parte do José ====
 
@@ -431,7 +439,7 @@ while True:
             print('nenhum ponto cadastrado ainda\n')
 
         else:
-            com_leitura = []  # Tuplas (índice de calor, nome, região)
+            com_leitura = []  # Tuplas (índice de calor, nome, região e temperatura)
             sem_leitura = []
 
             for ponto in pontos:
@@ -439,7 +447,7 @@ while True:
                     sem_leitura.append(ponto["nome"])
                 else:
                     ultima = ponto["leituras"][-1]
-                    com_leitura.append((indice_da_leitura(ultima), ponto["nome"], ponto["regiao"]))
+                    com_leitura.append((indice_da_leitura(ultima), ponto["nome"], ponto["regiao"], ultima["temperatura"]))
 
             if len(com_leitura) == 0:
                 print('Nenhum ponto tem leituras ainda. Use a opção 4 para registrar.\n')
@@ -447,10 +455,11 @@ while True:
             else:
                 com_leitura = sorted(com_leitura, reverse=True)  # Mais quente primeiro
 
-            for posicao, (ic, nome, regiao) in enumerate(com_leitura, start=1):
+            for posicao, (ic, nome, regiao, temp_atual) in enumerate(com_leitura, start=1):
                 estado = classificar_estado(ic)
                 print(f'{posicao}. {nome} ({regiao}) - Índice de calor: {ic}°C - {estado}')
                 print(f'   -> {recomendacao(estado)}')
+                print(f'   -> {mensagem_temperatura(temp_atual)}')
 
             if len(sem_leitura) > 0:
                 print('\nSem leituras: ' + ', '.join(sem_leitura))

@@ -525,20 +525,19 @@ while True:
 
                     print(f'\n--- Ponto Selecionado: {ponto_selecionado["nome"]} ---')
                     print('Tipo de relato:')
-                    for i, tipo_relato in enumerate(tipo_relato, start=1):
+                    for i, tipo_relato in enumerate(TIPOS_RELATO, start=1):
                         print(f'{i} - {tipo_relato}')
 
-                    while True:  # escolhe o tipo
+                    while True:  #escolhe o tipo
                         escolha_tipo = input('Digite o número do tipo: ')
                         escolha_tipo = validacao(escolha_tipo)
 
-                        if 1 <= escolha_tipo <= len(tipo_relato):
-                            tipo = tipo_relato[escolha_tipo - 1]
+                        if 1 <= escolha_tipo <= len(TIPOS_RELATO):
+                            tipo = TIPOS_RELATO[escolha_tipo - 1]
                             break
                         else:
                             print('Tipo inválido, tente novamente')
-
-                    while True:  # descrição sem dados pessoais
+                    while True:  #descrição sem dados pessoais
                         descricao = input('Descreva o ocorrido (sem seus dados pessoais): ').strip()
 
                         if descricao == '':

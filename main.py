@@ -1,4 +1,7 @@
 import json
+# ==== Parte Enzo ====
+from datetime import date
+# ==== Parte do José ====
 # ------------
 # Ponto Fresco
 # ------------
@@ -24,6 +27,80 @@ def salvar_dados(lista_pontos):
     """Função que salva os dados e envia eles pro arquivo json"""
     with open("pontos.json", "w", encoding="utf-8") as arquivo:
         json.dump(lista_pontos, arquivo, ensure_ascii=False, indent=4)
+
+# ==== parte do Enzo: indice de calor, estados e relatos (opções 5, 6 e 7) ====
+LIMITES = (27.0, 32.0, 39.0)  #Tupla: limites de atenção, alerta e perigo °C, igual do ESP32
+CORRECAO_SOL = 8.0  #°C somados ao indice quando o ponto não tem cobertura, ou seja, sol direto
+REGIOES = ('Leste', 'Sul', 'Norte', 'Oeste', 'Centro')
+TIPOS_RELATO = ('Ônibus atrasou', 'Ponto sem cobertura', 'Bebedouro quebrado',
+                'Pessoa passando mal', 'Problema de segurança', 'Outro')
+
+def calcular_indice_calor(temp_c, umidade, sol):
+    """Calcula o índice de calor em °C pela regressão de Rothfusz
+    Se sol=True (ponto sem cobertura), soma a correção de sol direto."""
+    t = temp_c * 9 / 5 + 32  #em °F
+    ic = 0.5 * (t + 61.0 + (t - 68.0) * 1.2 + umidade * 0.094)  #fórmula simples (dias amenos)
+
+    if (ic + t) / 2 >= 80:  #em dias quentes usa a regressão completa
+        ic = (-42.379 + 2.04901523 * t + 10.14333127 * umidade
+              - 0.22475541 * t * umidade - 0.00683783 * t ** 2
+              - 0.05481717 * umidade ** 2 + 0.00122874 * t ** 2 * umidade
+              + 0.00085282 * t * umidade ** 2 - 0.00000199 * t ** 2 * umidade ** 2)
+        if umidade < 13 and 80 <= t <= 112:
+            ic -= ((13 - umidade) / 4) * ((17 - abs(t - 95)) / 17) ** 0.5
+        elif umidade > 85 and 80 <= t <= 87:
+            ic += ((umidade - 85) / 10) * ((87 - t) / 5)
+
+    ic_celsius = (ic - 32) * 5 / 9
+    if sol:
+        ic_celsius += CORRECAO_SOL
+    return round(ic_celsius, 1)
+
+def indice_da_leitura(leitura):
+    """Recebe uma leitura e devolve o indice de calor dela. Sem cobertura = sol direto"""
+    return calcular_indice_calor(leitura["temperatura"], leitura["umidade"], not leitura["cobertura"])
+
+def indice_medio(leituras):
+    """Recebe a lista de leituras de um ponto e devolve a média dos índices de calor."""
+    soma = 0
+    for leitura in leituras:
+        soma += indice_da_leitura(leitura)
+    return round(soma / len(leituras), 1)
+
+def classificar_estado(ic):
+    """Classifica o indice de calor em normal, atencao, alerts ou perigo."""
+    if ic >= LIMITES[2]:
+        return "PERIGO"
+    elif ic >= LIMITES[1]:
+        return "ALERTA"
+    elif ic >= LIMITES[0]:
+        return "ATENCAO"
+    else:
+        return  "NORMAL"
+
+def recomendacao(estado):
+    """Devolve a orientação para o cidadaõ de acordo com o estado."""
+    match estado:
+        case "normal":
+            return "Sem risco relevante. Pode esperar tranquilo."
+        case "atenção":
+            return "Está quente. Beba água enquanto espera."
+        case "alerta":
+            return "Está quente demais para esperar ao sol. Procure sombra."
+        case "perigo":
+            return "Calor perigoso agora. Procure sombra e água o quanto antes."
+        case _:
+            return "estado desconhecido."
+
+def tem_dado_pessoal(texto):
+    """relato não pode ter telefone ou documento.
+    Considera suspeito um texto com 8 ou mais dígitos."""
+    digitos = 0
+    for caractere in texto:
+        if caractere.isdigit():
+            digitos += 1
+    return digitos >= 8
+# ==== parte do José ====
 
 pontos = carregar_dados() # Lista principal que guarda os dados
 
@@ -328,11 +405,143 @@ while True:
 
 
     elif opcao == 5: # Estado atual compara a temperatura de todas e retorna um estado (critico, favoravel, etc)
-        print('5')
+    # ==== parte do Enzo: opção 5 (Estado Atual) ====
+
+        print('Opção 5 - Estado Atual')
+        print('---' * 7)
+
+        if len(pontos) == 0:
+            print('nenhum ponto cadastrado ainda\n')
+
+        else:
+            com_leitura = []  #Tuplas (índice de calor, nome, região)
+            sem_leitura = []
+
+            for ponto in pontos:
+                if len(ponto["leituras"]) == 0:
+                    sem_leitura.append(ponto["nome"])
+                else:
+                    ultima = ponto["leituras"][-1]
+                    com_leitura.append((indice_da_leitura(ultima), ponto["nome"], ponto["regiao"]))
+
+            if len(com_leitura) == 0:
+                print('Nenhum ponto tem leituras ainda. Use a opção 4 para registrar.\n')
+
+            else:
+                com_leitura = sorted(com_leitura, reverse=True)  #Mais quente primeiro
+
+            for posicao, (ic, nome, regiao) in enumerate(com_leitura, start=1):
+                estado = classificar_estado(ic)
+                print(f'{posicao}. {nome} ({regiao}) - Índice de calor: {ic}°C - {estado}')
+                print(f'   -> {recomendacao(estado)}')
+
+            if len(sem_leitura) > 0:
+                print('\nSem leituras: '+', '.join(sem_leitura))
+
+            print('')
+
+    # ==== parte do José ====
+    
     elif opcao == 6: # Recomendação de Ponto, pergunta sua região e te dá o ponto com condições mais favoraveis (temp entre 16 a 30 graus em média; umidade boa; tem cobertura)
-        print('6')
+    # ==== parte do enzo: opção 6 (Recomendação de Ponto) ====
+
+        print('Opção 6 - Recomendação de Ponto')
+        print('---' * 7)
+
+        if len(pontos) == 0:
+            print('nenhum ponto cadastrado ainda\n')
+
+        else:
+            while True:
+                regiao_busca = input('Digite a região (Leste, Sul, Norte, Oeste ou Centro): ').strip().capitalize()
+                if regiao_busca in REGIOES:
+                    break
+                else:
+                    print('Região inválida. Tente novamente')
+
+            melhor_ponto = None
+            melhor_ic = 0
+
+            for ponto in pontos:
+                if ponto["regiao"] == regiao_busca and len(ponto["leituras"]) > 0:
+                    ic_medio = indice_medio(ponto["leituras"])
+                    if melhor_ponto is None or ic_medio < melhor_ic:
+                        melhor_ponto = ponto
+                        melhor_ic = ic_medio
+
+            if melhor_ponto is None:
+                print(f'\nNenhum ponto com leituras na região {regiao_busca}.\n')
+
+            else:
+                estado = classificar_estado(melhor_ic)
+                cobertura_txt = "Sim" if melhor_ponto["leituras"][-1]["cobertura"] else "Não"
+
+                print(f'\nMelhor ponto da região {regiao_busca}: {melhor_ponto["nome"]}')
+                print(f'Índice de calor médio: {melhor_ic}°C - {estado}')
+                print(f'Cobertura na última leitura: {cobertura_txt}')
+                print(f'-> {recomendacao(estado)}\n')
+
+        # ==== parte do José ====
     elif opcao == 7: # Registra um relato que é mais uma descrição sobre um ocorrido (onibus atrasou/assalto/tals)
-        print('7')
+        # ==== parte do Enzo: opção 7 (Registrar Relato) ====
+
+        print('Opção 7 - Registrar Relato')
+        print('---' * 7)
+
+        if len(pontos) == 0:
+            print('Nenhum ponto cadastrado ainda\n')
+
+        else:
+            for i, ponto in enumerate(pontos, start=1):
+                print(f'{i} - {ponto["nome"]} ({ponto["regiao"]})')
+            print('0 - voltar ao menu principal')
+
+            while True:
+                opc_relato = input('Digite o numero do ponto desejado:')
+                opc_relato = validacao(opc_relato)
+
+                if opc_relato == 0:
+                    break
+
+                elif 1 <= opc_relato <= len(pontos):
+                    ponto_selecionado = pontos[opc_relato - 1]
+
+                    print(f'\n--- Ponto Selecionado: {ponto_selecionado["nome"]} ---')
+                    print('Tipo de relato:')
+                    for i, tipo_relato in enumerate(tipo_relato, start=1):
+                        print(f'{i} - {tipo_relato}')
+
+                    while True:  #escolhe o tipo
+                        escolha_tipo = input('Digite o número do tipo: ')
+                        escolha_tipo = validacao(escolha_tipo)
+
+                        if 1 <= escolha_tipo <= len(tipo_relato):
+                            tipo = tipo_relato[escolha_tipo - 1]
+                            break
+                        else:
+                            print('Tipo inválido, tente novamente')
+
+                    while True:  #descrição sem dados pessoais
+                        descricao = input('Descreva o ocorrido (sem seus dados pessoais): ').strip()
+
+                        if descricao == '':
+                            print('Erro, a descrição não pode ficar vazia')
+                        elif tem_dado_pessoal(descricao):
+                            print('Erro, não coloque telefone ou documento no relato.')
+                        else:
+                            break
+
+                    relato = f'[{date.today().isoformat()}] {tipo}: {descricao}'
+                    ponto_selecionado["relatos"].append(relato)
+
+                    salvar_dados(pontos)
+                    print('\nRelato registrado e salvo com sucesso. Veja na opção 3.\n')
+                    break
+
+                else:
+                    print('Número de ponto inválido. Tente novamente.')
+
+        # ==== parte parte do josé ====
 
     elif opcao == 8:
 

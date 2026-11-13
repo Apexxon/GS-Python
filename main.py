@@ -1,7 +1,9 @@
 import json
 # ==== Parte Enzo ====
 from datetime import date
-# ==== Parte do José ====
+
+
+# ==== Parte do José (segundo commit)====
 # ------------
 # Ponto Fresco
 # ------------
@@ -15,33 +17,37 @@ def validacao(variavel):
     else:
         return -1
 
+
 def carregar_dados():
     """Função que carrega os pontos do arquivo json"""
     try:
         with open("pontos.json", "r", encoding="utf-8") as arquivo:
-                return json.load(arquivo)
+            return json.load(arquivo)
     except FileNotFoundError:
         return []
+
 
 def salvar_dados(lista_pontos):
     """Função que salva os dados e envia eles pro arquivo json"""
     with open("pontos.json", "w", encoding="utf-8") as arquivo:
         json.dump(lista_pontos, arquivo, ensure_ascii=False, indent=4)
 
+
 # ==== parte do Enzo: indice de calor, estados e relatos (opções 5, 6 e 7) ====
-LIMITES = (27.0, 32.0, 39.0)  #Tupla: limites de atenção, alerta e perigo °C, igual do ESP32
-CORRECAO_SOL = 8.0  #°C somados ao indice quando o ponto não tem cobertura, ou seja, sol direto
+LIMITES = (27.0, 32.0, 39.0)  # Tupla: limites de atenção, alerta e perigo °C, igual do ESP32
+CORRECAO_SOL = 8.0  # °C somados ao indice quando o ponto não tem cobertura, ou seja, sol direto
 REGIOES = ('Leste', 'Sul', 'Norte', 'Oeste', 'Centro')
 TIPOS_RELATO = ('Ônibus atrasou', 'Ponto sem cobertura', 'Bebedouro quebrado',
                 'Pessoa passando mal', 'Problema de segurança', 'Outro')
 
+
 def calcular_indice_calor(temp_c, umidade, sol):
     """Calcula o índice de calor em °C pela regressão de Rothfusz
     Se sol=True (ponto sem cobertura), soma a correção de sol direto."""
-    t = temp_c * 9 / 5 + 32  #em °F
-    ic = 0.5 * (t + 61.0 + (t - 68.0) * 1.2 + umidade * 0.094)  #fórmula simples (dias amenos)
+    t = temp_c * 9 / 5 + 32  # em °F
+    ic = 0.5 * (t + 61.0 + (t - 68.0) * 1.2 + umidade * 0.094)  # fórmula simples (dias amenos)
 
-    if (ic + t) / 2 >= 80:  #em dias quentes usa a regressão completa
+    if (ic + t) / 2 >= 80:  # em dias quentes usa a regressão completa
         ic = (-42.379 + 2.04901523 * t + 10.14333127 * umidade
               - 0.22475541 * t * umidade - 0.00683783 * t ** 2
               - 0.05481717 * umidade ** 2 + 0.00122874 * t ** 2 * umidade
@@ -56,9 +62,11 @@ def calcular_indice_calor(temp_c, umidade, sol):
         ic_celsius += CORRECAO_SOL
     return round(ic_celsius, 1)
 
+
 def indice_da_leitura(leitura):
     """Recebe uma leitura e devolve o indice de calor dela. Sem cobertura = sol direto"""
     return calcular_indice_calor(leitura["temperatura"], leitura["umidade"], not leitura["cobertura"])
+
 
 def indice_medio(leituras):
     """Recebe a lista de leituras de um ponto e devolve a média dos índices de calor."""
@@ -67,16 +75,18 @@ def indice_medio(leituras):
         soma += indice_da_leitura(leitura)
     return round(soma / len(leituras), 1)
 
+
 def classificar_estado(ic):
     """Classifica o indice de calor em normal, atencao, alerts ou perigo."""
     if ic >= LIMITES[2]:
-        return "PERIGO"
+        return "perigo"
     elif ic >= LIMITES[1]:
-        return "ALERTA"
+        return "alerta"
     elif ic >= LIMITES[0]:
-        return "ATENCAO"
+        return "atenção"
     else:
-        return  "NORMAL"
+        return "normal"
+
 
 def recomendacao(estado):
     """Devolve a orientação para o cidadaõ de acordo com o estado."""
@@ -92,6 +102,7 @@ def recomendacao(estado):
         case _:
             return "estado desconhecido."
 
+
 def tem_dado_pessoal(texto):
     """relato não pode ter telefone ou documento.
     Considera suspeito um texto com 8 ou mais dígitos."""
@@ -100,16 +111,18 @@ def tem_dado_pessoal(texto):
         if caractere.isdigit():
             digitos += 1
     return digitos >= 8
+
+
 # ==== parte do José ====
 
-pontos = carregar_dados() # Lista principal que guarda os dados
+pontos = carregar_dados()  # Lista principal que guarda os dados
 
 # Código
 
 while True:
     print('==== PONTO FRESCO ====')
     print('Encontre seu melhor ponto.')
-    print('---'*8)
+    print('---' * 8)
     print('1 - Cadastrar Ponto de Onibus')
     print('2 - Atualizar ou Remover ponto')
     print('3 - Lista de Pontos')
@@ -118,7 +131,7 @@ while True:
     print('6 - Recomendação de Ponto')
     print('7 - Registrar Relato')
     print('8 - Sair')
-    print('---'*8)
+    print('---' * 8)
 
     opcao = input('Digite sua opção: ')
     opcao = validacao(opcao)
@@ -131,23 +144,26 @@ while True:
     elif opcao == 1:
 
         print('Opção 1 - Cadastrar Ponto de Onibus')
-        print('-----'*7)
+        print('-----' * 7)
 
         nome = input('Digite o nome do ponto: ')
 
-        while True: # CHECA SE A REGIÃO EXISTE (Ex: Sul, Norte, Centro, Etc.)
+        while True:  # CHECA SE A REGIÃO EXISTE (Ex: Sul, Norte, Centro, Etc.)
             regiao = input('Digite a região: ')
             if regiao.capitalize() not in ('Leste', 'Sul', 'Norte', 'Oeste', 'Centro'):
                 print('Região inválida. Tente novamente!')
             else:
                 break
 
-        while True:  # CHECA SE AS COORDENADAS SÃO NÚMEROS
+        while True: # CHECA SE AS COORDENADAS SÃO NÚMEROS
             coordenadas = input('Digite as coordenadas: ').strip()
-            if coordenadas != '':
+
+            partes = coordenadas.split()
+
+            if partes and all(p.replace('-', '').isdigit() for p in partes):
                 break
             else:
-                print('Erro! Coordenadas não podem estar vazias. Tente novamente!')
+                print('Erro! Digite apenas números separados por espaço. Tente novamente!')
 
         while True:
             cobertura = input('O Ponto tem cobertura? (S ou N) ')
@@ -252,8 +268,6 @@ while True:
 
                         if confirmar == 'S':
 
-                            # Remove o ponto da lista pelo índice
-
                             pontos.pop(escolha - 1)
 
                             salvar_dados(pontos)
@@ -304,7 +318,6 @@ while True:
                     print(f'Coordenadas: {ponto_selecionado["coordenadas"]}')
                     print(f'Possui Cobertura (No momento cadastrado): {ponto_selecionado["cobertura"]}')
 
-
                     print('\n--- Histórico de Leituras ---')
                     if len(ponto_selecionado["leituras"]) == 0:
                         print('Nenhuma leitura registrada ainda.')
@@ -315,7 +328,7 @@ while True:
                             print(
                                 f'  {index}. Temp: {leitura["temperatura"]}°C | Umidade: {leitura["umidade"]}% | Cobertura: {cobertura_txt}')
 
-                    print('\n--- Relatos da Comunidade ---') # Relatos da opção 7
+                    print('\n--- Relatos da Comunidade ---')  # Relatos da opção 7
 
                     if len(ponto_selecionado["relatos"]) == 0:
                         print('Nenhum relato registrado ainda.')
@@ -363,14 +376,18 @@ while True:
                     print(f'\n--- Ponto Selecionado: {ponto_selecionado["nome"]} ---')
                     print('Iniciando Registro de Leitura...\n')
 
-                    while True: # Pega a temperatura
+                    while True:  # Pega a temperatura
                         try:
                             temperatura = float(input('Digite a temperatura (°C): ').strip())
-                            break
                         except ValueError:
                             print('Erro! Digite um valor de temperatura válido (ex: 28.5 ou -2).')
 
-                    while True: # PEga a umidade
+                        if temperatura > 80 or temperatura < -40:
+                            print('Temperatura inválida! Digite novamente.')
+                        else:
+                            break
+
+                    while True:  # PEga a umidade
                         try:
                             umidade = float(input('Digite a umidade (%): ').strip())
                             if 0 <= umidade <= 100:
@@ -380,7 +397,7 @@ while True:
                         except ValueError:
                             print('Erro! Digite um valor de umidade válido.')
 
-                    while True: # Pega a cobertura do ponto
+                    while True:  # Pega a cobertura do ponto
                         cobertura_leitura = input('O ponto possui cobertura no momento? (S/N): ').strip().capitalize()
 
                         if cobertura_leitura in ('Sim', 'S', 'N', 'Nao', 'Não'):
@@ -404,8 +421,8 @@ while True:
                     print('Número de ponto inválido! Tente novamente.')
 
 
-    elif opcao == 5: # Estado atual compara a temperatura de todas e retorna um estado (critico, favoravel, etc)
-    # ==== parte do Enzo: opção 5 (Estado Atual) ====
+    elif opcao == 5:  # Estado atual compara a temperatura de todas e retorna um estado (critico, favoravel, etc)
+        # ==== parte do Enzo: opção 5 (Estado Atual) ====
 
         print('Opção 5 - Estado Atual')
         print('---' * 7)
@@ -414,7 +431,7 @@ while True:
             print('nenhum ponto cadastrado ainda\n')
 
         else:
-            com_leitura = []  #Tuplas (índice de calor, nome, região)
+            com_leitura = []  # Tuplas (índice de calor, nome, região)
             sem_leitura = []
 
             for ponto in pontos:
@@ -428,7 +445,7 @@ while True:
                 print('Nenhum ponto tem leituras ainda. Use a opção 4 para registrar.\n')
 
             else:
-                com_leitura = sorted(com_leitura, reverse=True)  #Mais quente primeiro
+                com_leitura = sorted(com_leitura, reverse=True)  # Mais quente primeiro
 
             for posicao, (ic, nome, regiao) in enumerate(com_leitura, start=1):
                 estado = classificar_estado(ic)
@@ -436,14 +453,14 @@ while True:
                 print(f'   -> {recomendacao(estado)}')
 
             if len(sem_leitura) > 0:
-                print('\nSem leituras: '+', '.join(sem_leitura))
+                print('\nSem leituras: ' + ', '.join(sem_leitura))
 
             print('')
 
     # ==== parte do José ====
-    
-    elif opcao == 6: # Recomendação de Ponto, pergunta sua região e te dá o ponto com condições mais favoraveis (temp entre 16 a 30 graus em média; umidade boa; tem cobertura)
-    # ==== parte do enzo: opção 6 (Recomendação de Ponto) ====
+
+    elif opcao == 6:  # Recomendação de Ponto, pergunta sua região e te dá o ponto com condições mais favoraveis (temp entre 16 a 30 graus em média; umidade boa; tem cobertura)
+        # ==== parte do enzo: opção 6 (Recomendação de Ponto) ====
 
         print('Opção 6 - Recomendação de Ponto')
         print('---' * 7)
@@ -482,7 +499,7 @@ while True:
                 print(f'-> {recomendacao(estado)}\n')
 
         # ==== parte do José ====
-    elif opcao == 7: # Registra um relato que é mais uma descrição sobre um ocorrido (onibus atrasou/assalto/tals)
+    elif opcao == 7:  # Registra um relato que é mais uma descrição sobre um ocorrido (onibus atrasou/assalto/tals)
         # ==== parte do Enzo: opção 7 (Registrar Relato) ====
 
         print('Opção 7 - Registrar Relato')
@@ -511,7 +528,7 @@ while True:
                     for i, tipo_relato in enumerate(tipo_relato, start=1):
                         print(f'{i} - {tipo_relato}')
 
-                    while True:  #escolhe o tipo
+                    while True:  # escolhe o tipo
                         escolha_tipo = input('Digite o número do tipo: ')
                         escolha_tipo = validacao(escolha_tipo)
 
@@ -521,7 +538,7 @@ while True:
                         else:
                             print('Tipo inválido, tente novamente')
 
-                    while True:  #descrição sem dados pessoais
+                    while True:  # descrição sem dados pessoais
                         descricao = input('Descreva o ocorrido (sem seus dados pessoais): ').strip()
 
                         if descricao == '':

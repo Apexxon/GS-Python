@@ -430,7 +430,7 @@ while True:
 
 
     elif opcao == 5:  # Estado atual compara a temperatura de todas e retorna um estado (critico, favoravel, etc)
-        # ==== parte do Enzo: opção 5 (Estado Atual) ====
+                # ==== parte do Enzo: opção 5 (Estado Atual) ====
 
         print('Opção 5 - Estado Atual')
         print('---' * 7)
@@ -439,7 +439,7 @@ while True:
             print('nenhum ponto cadastrado ainda\n')
 
         else:
-            com_leitura = []  # Tuplas (índice de calor, nome, região e temperatura)
+            com_leitura = []  # Tuplas (índice de calor, nome, região, temperatura)
             sem_leitura = []
 
             for ponto in pontos:
@@ -455,11 +455,13 @@ while True:
             else:
                 com_leitura = sorted(com_leitura, reverse=True)  # Mais quente primeiro
 
-            for posicao, (ic, nome, regiao, temp_atual) in enumerate(com_leitura, start=1):
-                estado = classificar_estado(ic)
-                print(f'{posicao}. {nome} ({regiao}) - Índice de calor: {ic}°C - {estado}')
-                print(f'   -> {recomendacao(estado)}')
-                print(f'   -> {mensagem_temperatura(temp_atual)}')
+                for posicao, (ic, nome, regiao, temp_atual) in enumerate(com_leitura, start=1):
+                    estado = classificar_estado(ic)
+                    print(f'{posicao}. {nome} ({regiao}) - Índice de calor: {ic}°C - {estado}')
+
+                    if estado != "normal":  # com estado normal, não há aviso de calor para dar
+                        print(f'   -> Calor: {recomendacao(estado)}')
+                    print(f'   -> Temperatura: {mensagem_temperatura(temp_atual)}')
 
             if len(sem_leitura) > 0:
                 print('\nSem leituras: ' + ', '.join(sem_leitura))

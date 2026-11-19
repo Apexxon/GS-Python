@@ -1,16 +1,56 @@
 [
     {
-        "nome": "Av artur ramos 107",
+        "nome": "Av. artur ramos, 107",
         "regiao": "Sul",
-        "coordenadas": "2050 -105",
+        "coordenadas": [-23.5795, -46.6897],
+        "cobertura": true,
         "leituras": [
-            {
-                "temperatura": 27.0,
-                "umidade": 10.0,
-                "cobertura": true
-            }
+            {"temperatura": 27.0, "umidade": 10.0, "cobertura": true},
+            {"temperatura": 31.5, "umidade": 45.0, "cobertura": true}
         ],
-        "relatos": [],
-        "cobertura": "S"
+        "relatos": []
+    },
+    {
+        "nome": "Av. sapopemba, 9000",
+        "regiao": "Leste",
+        "coordenadas": [-23.6005, -46.4920],
+        "cobertura": false,
+        "leituras": [
+            {"temperatura": 33.5, "umidade": 55.0, "cobertura": false},
+            {"temperatura": 34.0, "umidade": 50.0, "cobertura": false}
+        ],
+        "relatos": [
+            "[2026-11-10] Ponto sem cobertura: Ponto só com totem, ao lado de muro, sol direto à tarde"
+        ]
+    },
+    {
+        "nome": "Av. aricanduva, 4000",
+        "regiao": "Leste",
+        "coordenadas": [-23.5640, -46.5150],
+        "cobertura": true,
+        "leituras": [
+            {"temperatura": 30.0, "umidade": 50.0, "cobertura": true}
+        ],
+        "relatos": [
+            "[2026-11-12] Bebedouro quebrado: Bebedouro da praça ao lado sem água desde segunda"
+        ]
+    },
+    {
+        "nome": "Praça da sé",
+        "regiao": "Centro",
+        "coordenadas": [-23.5503, -46.6340],
+        "cobertura": true,
+        "leituras": [
+            {"temperatura": 29.0, "umidade": 60.0, "cobertura": true}
+        ],
+        "relatos": []
+    },
+    {
+        "nome": "Av. inajar de souza, 1200",
+        "regiao": "Norte",
+        "coordenadas": [-23.4870, -46.6830],
+        "cobertura": false,
+        "leituras": [],
+        "relatos": []
     }
 ]

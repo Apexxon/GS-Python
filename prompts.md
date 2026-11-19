@@ -49,4 +49,17 @@ Os prompts abaixo estão resumidos. Em todos eles o grupo colou junto o trecho d
 | Fechar o programa com Ctrl+C mostrava uma mensagem de erro | Tratamento de `KeyboardInterrupt` e `EOFError` no início do programa |
 | Boas práticas: menu inteiro fora de funções, tupla de regiões repetida, nome do arquivo repetido e erros de digitação | Cada opção do menu virou uma função, o menu passou a usar `match/case`, e foram criadas as constantes `ARQUIVO_DADOS`, `REGIOES`, `RESPOSTAS_SIM` e `RESPOSTAS_NAO` |
 
+## 4. Como o grupo verificou, testou e ajustou os resultados
+
+- Executamos o programa e repetimos os casos que davam erro antes da correção: texto e "nan" na temperatura, arquivo `pontos.json` vazio, coordenadas com casas decimais, nome vazio, região com espaços e Ctrl+C.
+- Testamos cada opção do menu do começo ao fim: cadastro, atualização de cada campo, remoção com confirmação, listagem com detalhes, registro de leitura, estado atual, recomendação por região e registro de relato.
+- Conferimos o índice de calor calculado com a tabela do serviço meteorológico dos EUA (NWS). Por exemplo, 33,5 °C com 55% de umidade resulta em 39,0 °C à sombra, o mesmo valor usado no ESP32.
+- Lemos cada alteração sugerida para garantir que todos os integrantes saibam explicar o código, e mantivemos apenas os recursos vistos na disciplina, sem bibliotecas externas.
+
+## 5. Análise crítica
+
+**Benefícios:** a IA encontrou rapidamente erros que só aparecem com entradas inesperadas, como texto no lugar de número ou um arquivo JSON vazio, que não tínhamos testado. Ela também mostrou onde o código repetia trechos que podiam virar funções.
+
+**Limitações:** a IA não conhece o contexto do nosso problema nem os testes que fizemos, então cada sugestão precisou ser conferida executando o programa. Algumas sugestões eram mais avançadas que o conteúdo da disciplina e foram simplificadas.
+
 **Dificuldades:** foi preciso entender cada correção antes de aceitá-la, porque o grupo precisa saber explicar todas as linhas do código. Também foi necessário conferir se os valores do índice de calor continuavam iguais aos do ESP32 depois das mudanças.
